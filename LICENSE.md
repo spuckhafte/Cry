@@ -1,5 +1,5 @@
 # LICENSE
-<ol>
+<ul>
   <li>The source code must be made public whenever a distribution of the software is made.</li>
   <li>Modifications of the software must be released under the same license.</li>
   <li>Changes made to the source code must be documented.</li>
