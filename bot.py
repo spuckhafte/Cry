@@ -3,7 +3,7 @@ import json
 import discord
 from functions import bot_funcs
 
-TOKEN = 'OTIyMDU0MTIwODA5MDU4MzI0.Yb730Q.RFPanj996sSIZ2ayPj79POZ0E2o'
+TOKEN = ''
 PREFIX = 'cry-'
 client = discord.Client()
 
