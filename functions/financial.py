@@ -88,7 +88,9 @@ def genesis_block():
     with open('members.json', 'r') as file:
         hash_trans_string = json.load(file)
 
-    hash_trans_string['current-unmined-string'] = raw_transaction_string
+    hash_trans_string['current-unmined-string'].append(raw_transaction_string)
+    var = datetime.now()
+    hash_trans_string['last-activity'] = f'{var.year}/{var.month}/{var.day} {var.hour}:{var.minute}:{var.second}'
 
     with open('members.json', 'w') as file:
         json.dump(hash_trans_string, file, indent=4)

@@ -42,7 +42,11 @@ async def on_message(msg):
                     await msg.author.send("Public ledger:", file=ledger)
 
             if content == 'mine':
-                await bot_funcs.send_unsigned_transaction(msg)
+                check_for_mine = await bot_funcs.check_for_mine()
+                if check_for_mine[0]:
+                    await bot_funcs.send_unsigned_transaction(msg)
+                else:
+                    await chnl.send(f'**Wait**: `{check_for_mine[1]}/5 minutes`')
 
             if content.startswith('mined'):
                 await bot_funcs.check_mine(msg)

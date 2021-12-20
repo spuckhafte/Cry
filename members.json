@@ -6,9 +6,12 @@
         },
         {
             "username": "spuckhafte_ferwirklung#7109",
-            "cries": "0"
+            "cries": "3.018325e-09"
         }
     ],
     "total-transactions": "0",
-    "current-unmined-string": "1/10?:CryCoin(1912202123)/0000000000000000000000000000000000000000000000000000000000000000/nonce"
+    "last-activity": "2021/12/20 17:40:5",
+    "current-unmined-string": [
+        "1/10?:CryCoin(2012202117)/0000000000000000000000000000000000000000000000000000000000000000/nonce"
+    ]
 }
