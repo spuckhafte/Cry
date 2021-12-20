@@ -1,10 +1,11 @@
 import json
 import discord
 from datetime import datetime
-
+from bot_bio import Behaviour
 from functions import financial
 
-FACTOR = 10**15
+FACTOR = Behaviour.cry_factor
+SIGN = Behaviour.hash_sign
 
 
 async def join(message):
@@ -32,11 +33,11 @@ async def join(message):
 
 
 async def send_unsigned_transaction(message):
-    total_transactions = financial.max_row()
     genesis = False
     with open('members.json', 'r') as file_transactions:
         check_transactions = json.load(file_transactions)
-        if int(int(check_transactions['total-transactions']) == total_transactions == 0):
+        diff = await difference_in_time()
+        if len(check_transactions['current-unmined-string']) == 0 and diff is None or diff > 5:
             financial.genesis_block()
             genesis = True
 
@@ -49,11 +50,10 @@ async def send_unsigned_transaction(message):
         embed.add_field(name='Mine', value=f'`{unmined_string[0]}`', inline=False)
         embed.add_field(name='Format', value=f'`Index/Details/Previous-Hash/Nonce`')
         embed.add_field(name='Suffix for the string', value='`/~~mined-Hash`')
-        embed.add_field(name='Hash Signature', value='`2005c`')
-
+        embed.add_field(name='Hash Signature', value=f'`{SIGN}`')
         await message.channel.send(embed=embed)
-        await message.channel.send('** **')
-        await message.channel.send('This is the `Genesis Block`, **first block of the chain**')
+        if financial.max_row() == 0:
+            await message.channel.send('This is the `Genesis Block`, **first block of the chain**')
 
 
 async def check_mine(message):
@@ -102,15 +102,23 @@ async def award_user(data):
 
 
 async def check_for_mine():
-    with open('members.json', 'r') as infile:
-        check_last = json.load(infile)
-    if check_last['last-activity'] != "":
-        last = check_last['last-activity']
-        var = datetime.now()
-        time_difference = datetime(var.year, var.month, var.day, var.hour, var.minute, var.second) - datetime.strptime(last, '%Y/%m/%d %H:%M:%S')
-        if time_difference.seconds/60 < 5:
-            return [False, round(time_difference.seconds/60)]
+    time_difference = await difference_in_time()
+    if time_difference is not None:
+        if time_difference / 60 < 5:
+            return [False, round(time_difference / 60)]
         else:
             return [True]
     else:
         return [True]
+
+
+async def difference_in_time():
+    with open('members.json', 'r') as infile:
+        check_last = json.load(infile)
+    if check_last['last-activity'] != '':
+        last = check_last['last-activity']
+        var = datetime.now()
+        diff = datetime(var.year, var.month, var.day, var.hour, var.minute, var.second) - datetime.strptime(last, '%Y/%m/%d %H:%M:%S')
+        return diff.seconds
+    else:
+        return None

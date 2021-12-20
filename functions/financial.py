@@ -1,6 +1,7 @@
+import random
 from datetime import datetime
 import json
-
+from bot_bio import Behaviour
 import openpyxl as xl
 from cryptography.fernet import Fernet
 import hashlib
@@ -69,20 +70,25 @@ def max_row():
     return ledger_sheet.max_row-1
 
 
-def max_cols_in_a_row(row):
-    j = 1
-    while True:
-        if ledger_sheet.cell(row, j).value is None:
-            return j - 1
-        else:
-            j += 1
-            continue
-
-
 def genesis_block():
     day, month, year, hour = str(datetime.now().day), str(datetime.now().month), str(datetime.now().year), str(datetime.now().hour)
     datetime_str = day+month+year+hour
-    details = [str(max_row()+1), '10', '?', "CryCoin", datetime_str, '0000000000000000000000000000000000000000000000000000000000000000', 'nonce']
+    prev_hash = None
+    to = 'CryCoin'
+    from_ = '?'
+    amount = '0'
+    if max_row() == 0:
+        fac = Behaviour.cry_factor
+        with open('members.json', 'r') as infile:
+            infile = json.load(infile)
+        members = [user['username'] for user in infile['users']]
+        cries = [int(user['cries'])*fac if int(user['cries']) != 0 else fac for user in infile['users']]
+
+        amount = '10'
+        to = random.choices(members, cries)[0]
+        prev_hash = '0000000000000000000000000000000000000000000000000000000000000000'
+
+    details = [str(max_row()+1), amount, from_, to, datetime_str, f'{prev_hash}', 'nonce']
     raw_transaction_string = f"{details[0]}/{details[1]}{details[2]}:{details[3]}({details[4]})/{details[5]}/{details[6]}"
 
     with open('members.json', 'r') as file:
@@ -95,3 +101,5 @@ def genesis_block():
     with open('members.json', 'w') as file:
         json.dump(hash_trans_string, file, indent=4)
 
+
+# print(mine('1/10?:spuckhafte_ferwirklung#7109(2012202123)/0000000000000000000000000000000000000000000000000000000000000000/nonce'))

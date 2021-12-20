@@ -1,10 +1,10 @@
 import json
-
 import discord
 from functions import bot_funcs
+from bot_bio import Behaviour
 
-TOKEN = ''
-PREFIX = 'cry-'
+TOKEN = Behaviour.bot_token
+PREFIX = Behaviour.bot_prefix
 client = discord.Client()
 
 
@@ -17,14 +17,14 @@ async def on_ready():
 async def on_message(msg):
     member = False
     chnl = msg.channel
-    if msg.content.startswith(PREFIX):
+    if msg.content.lower().startswith(PREFIX):
         content = msg.content.split('-')
         content.remove('cry')
-        content = ''.join(content)
+        content = ''.join(content).lower()
 
         names = []
-        with open('members.json', 'r') as members_list_read:
-            users_info = json.load(members_list_read)
+        with open('members.json', 'r') as users_info:
+            users_info = json.load(users_info)
         for user in users_info['users']:
             names.append(user['username'])
 
