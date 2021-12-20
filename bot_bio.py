@@ -1,5 +1,5 @@
 class Behaviour:
     bot_token = ''
-    bot_prefix = 'cry-'
-    cry_factor = 10 ** 15
-    hash_sign = '2005c'
+    bot_prefix = ''
+    cry_factor = None # number
+    hash_sign = ''
