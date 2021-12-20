@@ -3,5 +3,8 @@
 
     ],
     "total-transactions": "0",
-    "current-unmined-string": ""
+    "current-unmined-string": [
+
+    ],
+    "last-activity": ""
 }
