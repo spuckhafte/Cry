@@ -6,6 +6,7 @@ from functions import financial
 
 FACTOR = Behaviour.cry_factor
 SIGN = Behaviour.hash_sign
+TIMEOUT = Behaviour.time_out
 
 
 async def join(message):
@@ -37,9 +38,16 @@ async def send_unsigned_transaction(message):
     with open('members.json', 'r') as file_transactions:
         check_transactions = json.load(file_transactions)
         diff = await difference_in_time()
-        if len(check_transactions['current-unmined-string']) == 0 and diff is None or diff > 5:
-            financial.genesis_block()
+        if len(check_transactions['current-unmined-string']) == 0 and diff is None or diff > TIMEOUT:
+            import_data = financial.genesis_block()
+            await transaction(import_data)
             genesis = True
+
+        if len(check_transactions['current-unmined-string']) != 0:
+            if '?' in check_transactions['current-unmined-string'][0]:
+                import_data = financial.genesis_block()
+                await transaction(import_data)
+                genesis = True
 
     if genesis:
         with open('members.json', 'r') as file_transactions:
@@ -65,23 +73,50 @@ async def check_mine(message):
 
     user_mined_hash = user_mined_string.pop()
     user_mined_string = '/'.join(user_mined_string)
-    user_mined_string_to_hash = f'~~{financial.EncDeEnc(deEncrypted=user_mined_string).hash_encrypt()}'
+    user_mined_string_to_hash = f'{financial.EncDeEnc(deEncrypted=user_mined_string).hash_encrypt()}'
 
     with open('members.json', 'r') as infile:
         infile = json.load(infile)
     current_hash = infile['current-unmined-string'][0].split('/')
     current_hash.pop()
     current_hash = '/'.join(current_hash)
+    print(user_mined_hash, user_mined_string_to_hash)
 
-    if user_mined_hash == user_mined_string_to_hash and user_mined_hash.startswith('~~2005c') \
+    # buggy comparison ---
+    if user_mined_hash == user_mined_string_to_hash and user_mined_hash.startswith(f'{SIGN}') \
             and user_mined_string.startswith(current_hash):
-        await message.channel.send(f'Eureka, First block created by {message.author.mention}')
+        if financial.max_row() == 0:
+            await message.channel.send(f'Eureka, First block created by {message.author.mention}')
+
+        details = ''.join(user_mined_string.split('/')[1]).split(':')
+        amount, from_ = ''.join(details[0]).split(',')[0], ''.join(details[0]).split(',')[1]
+        to_, event = ''.join(details[1]).split('(')[0], ''.join(details[1]).split('(')[1].split(')')[0]
+        last_hash = financial.previous_hash()
+        user_mined_hash = list(user_mined_hash)
+        user_mined_hash.remove('~')
+        user_mined_hash.remove('~')
+        user_mined_hash = ''.join(user_mined_hash)
         export_data = {
             'transaction_string': user_mined_string,
             'author': str(message.author),
-            'hash': user_mined_hash,
+            'amount': str(amount), 'to': to_, 'from': from_, 'event': event,
+            'last-hash': last_hash, 'string': user_mined_string, 'hash': user_mined_hash
         }
-        await award_user(export_data)
+        cries = await award_user(export_data)
+        await message.channel.send(f'{message.author.mention} **Congo, You got: `{float(cries)} cries`**')
+        financial.sync_xl(export_data)
+
+        with open('members.json', 'r') as infile:
+            infile = json.load(infile)
+        with open('members.json', 'w') as outfile:
+            infile['current-unmined-string'].pop()
+            json.dump(infile, outfile, indent=4)
+
+        with open("functions/ledger.xlsx", 'rb') as file:
+            ledger = discord.File(file)
+            await message.channel.send("Public ledger - updated:", file=ledger)
+    else:
+        await message.channel.send('**Wrong Hash**')
 
 
 async def award_user(data):
@@ -100,16 +135,39 @@ async def award_user(data):
     with open('members.json', 'w') as outfile:
         json.dump(cry_file, outfile, indent=4)
 
+    return cries
+
 
 async def check_for_mine():
     time_difference = await difference_in_time()
     if time_difference is not None:
-        if time_difference / 60 < 5:
+        if time_difference / 60 < TIMEOUT:
             return [False, round(time_difference / 60)]
         else:
             return [True]
     else:
         return [True]
+
+
+async def transaction(data):
+    amount = data['cries']
+    to_ = data['to']
+    from_ = data['from']
+
+    with open('members.json', 'r') as read_only:
+        read_only = json.load(read_only)
+    for user in read_only['users']:
+        if user['username'] == to_:
+            user['cries'] = str(float(user['cries']) + float(amount))
+            break
+
+    if from_ != '?':
+        for user in read_only['users']:
+            if user['username'] == from_:
+                user['cries'] = str(float(user['cries']) - float(amount))
+
+    with open('members.json', 'w') as outfile:
+        json.dump(read_only, outfile, indent=4)
 
 
 async def difference_in_time():

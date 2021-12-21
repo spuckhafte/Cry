@@ -6,6 +6,9 @@ import openpyxl as xl
 from cryptography.fernet import Fernet
 import hashlib
 
+SIGN = Behaviour.hash_sign
+DEF_AMOUNT = Behaviour.default_amount
+
 key = Fernet.generate_key()
 fernet = Fernet(key)
 
@@ -23,7 +26,7 @@ ledger_sheet = ledger_wb['Sheet1']
 # value of the entity
 info = {
     'Cr.1': '$.100',
-    'Format': '1/10?:CryCoin(1812210)/0000000000000000000000000000000000000000000000000000000000000000/1157551/--2005ca051baeb3b0557ee056c28ec3f0e76e25bf3a2fafd14227b6a3c2bae2ae'
+    'Format': '1/10,?:CryCoin(1812210)/0000000000000000000000000000000000000000000000000000000000000000/1157551/--2005ca051baeb3b0557ee056c28ec3f0e76e25bf3a2fafd14227b6a3c2bae2ae'
 }
 
 
@@ -59,7 +62,7 @@ def mine(transaction_data):
         new_transaction_data = '/'.join(array_transaction_data)
         encryption_on_data = EncDeEnc(deEncrypted=new_transaction_data).hash_encrypt()
 
-        if encryption_on_data.startswith('2005c'):
+        if encryption_on_data.startswith(SIGN):
             new_transaction_data += f'/~~{encryption_on_data}'
             return [new_transaction_data, encryption_on_data]
         else:
@@ -67,29 +70,34 @@ def mine(transaction_data):
 
 
 def max_row():
-    return ledger_sheet.max_row-1
+    return ledger_sheet.max_row - 1
+
+
+def previous_hash():
+    row = max_row()
+    prev = ledger_sheet.cell(row+1, 8).value if row != 0 else Behaviour.default_hash
+    return prev
 
 
 def genesis_block():
-    day, month, year, hour = str(datetime.now().day), str(datetime.now().month), str(datetime.now().year), str(datetime.now().hour)
-    datetime_str = day+month+year+hour
-    prev_hash = None
-    to = 'CryCoin'
+    day, month, year, hour = str(datetime.now().day), str(datetime.now().month), str(datetime.now().year), str(
+        datetime.now().hour)
+    datetime_str = day + month + year + hour
+
     from_ = '?'
-    amount = '0'
-    if max_row() == 0:
-        fac = Behaviour.cry_factor
-        with open('members.json', 'r') as infile:
-            infile = json.load(infile)
-        members = [user['username'] for user in infile['users']]
-        cries = [int(user['cries'])*fac if int(user['cries']) != 0 else fac for user in infile['users']]
 
-        amount = '10'
-        to = random.choices(members, cries)[0]
-        prev_hash = '0000000000000000000000000000000000000000000000000000000000000000'
+    fac = Behaviour.cry_factor
+    with open('members.json', 'r') as infile:
+        infile = json.load(infile)
+    members = [user['username'] for user in infile['users']]
+    cries = [float(user['cries']) * fac if float(user['cries']) != 0 else 1/fac for user in infile['users']]
 
-    details = [str(max_row()+1), amount, from_, to, datetime_str, f'{prev_hash}', 'nonce']
-    raw_transaction_string = f"{details[0]}/{details[1]}{details[2]}:{details[3]}({details[4]})/{details[5]}/{details[6]}"
+    amount = float(DEF_AMOUNT) if max_row() == 0 else float(1/fac)
+    to = random.choices(members, cries)[0]
+    prev_hash = previous_hash()
+
+    details = [str(max_row() + 1), amount, from_, to, datetime_str, f'{prev_hash}', 'nonce']
+    raw_transaction_string = f"{details[0]}/{details[1]},{details[2]}:{details[3]}({details[4]})/{details[5]}/{details[6]}"
 
     with open('members.json', 'r') as file:
         hash_trans_string = json.load(file)
@@ -101,5 +109,23 @@ def genesis_block():
     with open('members.json', 'w') as file:
         json.dump(hash_trans_string, file, indent=4)
 
+    export_data = {
+        'cries': amount,
+        'to': to,
+        'from': from_
+    }
 
-# print(mine('1/10?:spuckhafte_ferwirklung#7109(2012202123)/0000000000000000000000000000000000000000000000000000000000000000/nonce'))
+    return export_data
+
+
+def sync_xl(data):
+    dumping_data = [max_row() + 1, data['amount'], data['from'], data['to'], data['event'], data['last-hash'],
+                    data['string'], data['hash']]
+
+    row = max_row()+2
+    for index in range(1, len(dumping_data)+1):
+        ledger_sheet.cell(row, index).value = dumping_data[index-1]
+    ledger_wb.save('./functions/ledger.xlsx')
+
+
+# print(mine('2/1e-15,?:spuckhafte_ferwirklung#7109(2112202123)/2005cc04ab531195369efaf51d292e7dfc50d76fe222ce468e3ec10d914a60a3/nonce'))

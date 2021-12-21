@@ -50,6 +50,19 @@ async def on_message(msg):
 
             if content.startswith('mined'):
                 await bot_funcs.check_mine(msg)
+
+            if content.startswith('me'):
+                with open('members.json', 'r') as details:
+                    details = json.load(details)
+                for user in details['users']:
+                    if user['username'] == str(msg.author):
+                        embed = discord.Embed(title='User Detail')
+                        embed.add_field(name='**Username:**', value=f"`{user['username']}`", inline=False)
+                        embed.add_field(name='**Cries:**', value=f"`{user['cries']}`", inline=False)
+                        await msg.reply(embed=embed)
+                        break
+
+
         else:
             await msg.reply('**You are not a member here**')
 
