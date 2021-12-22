@@ -13,7 +13,9 @@ async def join(message):
     chnl = message.channel
     user_info = {
         'username': str(message.author),
-        'cries': '0'
+        'cries': '0',
+        'able': '1',
+        'pending-string': ''
     }
 
     with open('members.json', 'r') as members_list_read:
@@ -49,13 +51,14 @@ async def send_unsigned_transaction(message):
             genesis = True
 
         if len(check_transactions['current-unmined-string']) != 0:
-            if '?' in check_transactions['current-unmined-string'][0]:
-                string = check_transactions['current-unmined-string'][0]
-                var = datetime.now()
+            string = check_transactions['current-unmined-string'][0]
+            var = datetime.now()
+            with open('members.json', 'r') as temp_open:
+                temp_open = json.load(temp_open)
                 temp_open['last-activity'] = f'{var.year}/{var.month}/{var.day} {var.hour}:{var.minute}:{var.second}'
-                genesis = True
-    with open('members.json', 'w') as outfile:
-        json.dump(temp_open, outfile, indent=4)
+            with open('members.json', 'w') as outfile:
+                json.dump(temp_open, outfile, indent=4)
+            genesis = True
 
     if genesis:
         embed = discord.Embed(title='Mining')
@@ -73,7 +76,8 @@ async def check_mine(message):
     user_mined_string.remove('cry')
     user_mined_string.remove('mined')
     user_mined_string = ''.join(user_mined_string)
-    if user_mined_string.index('e') < user_mined_string.index(':'):
+    if user_mined_string.index('e') < user_mined_string.index(':') and \
+            user_mined_string[user_mined_string.index('e')-1].isalpha() is False:
         user_mined_string = list(user_mined_string)
         user_mined_string.insert(user_mined_string.index('e') + 1, '-')
         user_mined_string = ''.join(user_mined_string)
@@ -115,7 +119,18 @@ async def check_mine(message):
         with open('members.json', 'r') as infile:
             infile = json.load(infile)
         with open('members.json', 'w') as outfile:
-            infile['current-unmined-string'].pop()
+            for string in infile['current-unmined-string']:
+                string = string.split('/')
+                string.pop()
+                string = '/'.join(string)
+                if user_mined_string.startswith(string):
+                    infile['current-unmined-string'].remove(string+'/nonce')
+            if '?' not in user_mined_string:
+                if str(message.author) in user_mined_string.split('/')[1].split(':')[0]:
+                    for user in infile['users']:
+                        if user['username'] == str(message.author):
+                            user['pending-string'] = ''
+                            user['able'] = "1"
             json.dump(infile, outfile, indent=4)
 
         with open("functions/ledger.xlsx", 'rb') as file:
@@ -205,3 +220,28 @@ async def extract_data_from_string(transaction_string):
         'last-hash': prev_hash, 'string': string, 'hash': cur_hash
     }
     return export_info
+
+
+async def cries_transaction(data):
+    index, amount, from_, to_, event = financial.max_row()+1, data['cries'], data['from'], data['to'], data['event']
+    prev_hash = financial.previous_hash()
+    transaction_string = f'{index}/{amount},{from_}:{to_}({event})/{prev_hash}/nonce'
+
+    var = datetime.now()
+    last_activity = f'{var.year}/{var.month}/{var.day} {var.hour}:{var.minute}:{var.second}'
+
+    with open('members.json', 'r') as edit_current_strings:
+        infile = json.load(edit_current_strings)
+    infile['current-unmined-string'].append(transaction_string)
+    infile['last-activity'] = f'{last_activity}'
+    for user in infile['users']:
+        if user['username'] == from_:
+            user['pending-string'] = transaction_string
+            user['able'] = "0"
+
+    with open('members.json', 'w') as outfile:
+        json.dump(infile, outfile, indent=4)
+
+    await transaction(data)
+    return transaction_string
+
