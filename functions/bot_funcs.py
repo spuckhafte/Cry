@@ -35,27 +35,31 @@ async def join(message):
 
 async def send_unsigned_transaction(message):
     genesis = False
+    string = None
     with open('members.json', 'r') as file_transactions:
         check_transactions = json.load(file_transactions)
-        diff = await difference_in_time()
-        if len(check_transactions['current-unmined-string']) == 0 and diff is None or diff > TIMEOUT:
+        diff = await difference_in_time() if await difference_in_time() is not None else TIMEOUT+1
+
+        if len(check_transactions['current-unmined-string']) == 0 and diff > TIMEOUT:
             import_data = financial.genesis_block()
             await transaction(import_data)
+            with open('members.json', 'r') as temp_open:
+                temp_open = json.load(temp_open)
+                string = temp_open['current-unmined-string'][0]
             genesis = True
 
         if len(check_transactions['current-unmined-string']) != 0:
             if '?' in check_transactions['current-unmined-string'][0]:
-                import_data = financial.genesis_block()
-                await transaction(import_data)
+                string = check_transactions['current-unmined-string'][0]
+                var = datetime.now()
+                temp_open['last-activity'] = f'{var.year}/{var.month}/{var.day} {var.hour}:{var.minute}:{var.second}'
                 genesis = True
+    with open('members.json', 'w') as outfile:
+        json.dump(temp_open, outfile, indent=4)
 
     if genesis:
-        with open('members.json', 'r') as file_transactions:
-            file_transactions = json.load(file_transactions)
-            unmined_string = file_transactions['current-unmined-string']
-
         embed = discord.Embed(title='Mining')
-        embed.add_field(name='Mine', value=f'`{unmined_string[0]}`', inline=False)
+        embed.add_field(name='Mine', value=f'`{string}`', inline=False)
         embed.add_field(name='Format', value=f'`Index/Details/Previous-Hash/Nonce`')
         embed.add_field(name='Suffix for the string', value='`/~~mined-Hash`')
         embed.add_field(name='Hash Signature', value=f'`{SIGN}`')
@@ -71,7 +75,7 @@ async def check_mine(message):
     user_mined_string = ''.join(user_mined_string)
     if user_mined_string.index('e') < user_mined_string.index(':'):
         user_mined_string = list(user_mined_string)
-        user_mined_string.insert(user_mined_string.index('e')+1, '-')
+        user_mined_string.insert(user_mined_string.index('e') + 1, '-')
         user_mined_string = ''.join(user_mined_string)
     user_mined_string = user_mined_string.split('/')
 
@@ -178,7 +182,26 @@ async def difference_in_time():
     if check_last['last-activity'] != '':
         last = check_last['last-activity']
         var = datetime.now()
-        diff = datetime(var.year, var.month, var.day, var.hour, var.minute, var.second) - datetime.strptime(last, '%Y/%m/%d %H:%M:%S')
+        diff = datetime(var.year, var.month, var.day, var.hour, var.minute, var.second) - datetime.strptime(last,
+                                                                                                            '%Y/%m/%d %H:%M:%S')
         return diff.seconds
     else:
         return None
+
+
+async def extract_data_from_string(transaction_string):
+    transaction_array = transaction_string.split('/')
+    details = transaction_array[1].split(':')
+    amount = details[0].split(',')[0]
+    from_ = details[0].split(',')[1]
+    to_ = details[1].split('(')[0]
+    event = details[1].split['('][1].split(')')[0]
+    prev_hash = transaction_array[2]
+    string = transaction_string
+    cur_hash = transaction_array.pop()
+
+    export_info = {
+        'amount': amount, 'from': from_, 'to': to_, 'event': event,
+        'last-hash': prev_hash, 'string': string, 'hash': cur_hash
+    }
+    return export_info

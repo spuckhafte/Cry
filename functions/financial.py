@@ -128,4 +128,4 @@ def sync_xl(data):
     ledger_wb.save('./functions/ledger.xlsx')
 
 
-# print(mine('2/1e-15,?:spuckhafte_ferwirklung#7109(2112202123)/2005cc04ab531195369efaf51d292e7dfc50d76fe222ce468e3ec10d914a60a3/nonce'))
+# print(mine('3/1e-15,?:spuckhafte_ferwirklung#7109(2212202119)/2005cc89e900928d541c57c0776992efb60b6a60a3566780d531bbcdb974f23e/nonce'))
