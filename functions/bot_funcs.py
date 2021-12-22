@@ -69,21 +69,23 @@ async def check_mine(message):
     user_mined_string.remove('cry')
     user_mined_string.remove('mined')
     user_mined_string = ''.join(user_mined_string)
+    if user_mined_string.index('e') < user_mined_string.index(':'):
+        user_mined_string = list(user_mined_string)
+        user_mined_string.insert(user_mined_string.index('e')+1, '-')
+        user_mined_string = ''.join(user_mined_string)
     user_mined_string = user_mined_string.split('/')
 
     user_mined_hash = user_mined_string.pop()
     user_mined_string = '/'.join(user_mined_string)
-    user_mined_string_to_hash = f'{financial.EncDeEnc(deEncrypted=user_mined_string).hash_encrypt()}'
+    user_mined_string_to_hash = f'~~{financial.EncDeEnc(deEncrypted=user_mined_string).hash_encrypt()}'
 
     with open('members.json', 'r') as infile:
         infile = json.load(infile)
     current_hash = infile['current-unmined-string'][0].split('/')
     current_hash.pop()
     current_hash = '/'.join(current_hash)
-    print(user_mined_hash, user_mined_string_to_hash)
 
-    # buggy comparison ---
-    if user_mined_hash == user_mined_string_to_hash and user_mined_hash.startswith(f'{SIGN}') \
+    if user_mined_hash == user_mined_string_to_hash and user_mined_hash.startswith(f'~~{SIGN}') \
             and user_mined_string.startswith(current_hash):
         if financial.max_row() == 0:
             await message.channel.send(f'Eureka, First block created by {message.author.mention}')
