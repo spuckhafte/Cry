@@ -148,7 +148,7 @@ async def check_for_mine():
     time_difference = await difference_in_time()
     if time_difference is not None:
         if time_difference / 60 < TIMEOUT:
-            return [False, round(time_difference / 60)]
+            return [False, round(time_difference / 60, 1)]
         else:
             return [True]
     else:

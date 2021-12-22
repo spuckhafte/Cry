@@ -12,7 +12,6 @@ DEF_AMOUNT = Behaviour.default_amount
 key = Fernet.generate_key()
 fernet = Fernet(key)
 
-# loading the ledger
 try:
     with open('functions/ledger.xlsx', 'rb') as outfile:
         ledger_wb = xl.load_workbook(outfile)
@@ -120,7 +119,7 @@ def genesis_block():
 
 def sync_xl(data):
     dumping_data = [max_row() + 1, data['amount'], data['from'], data['to'], data['event'], data['last-hash'],
-                    data['string'], data['hash']]
+                    f"{data['string']}/~~{data['hash']}", data['hash']]
 
     row = max_row()+2
     for index in range(1, len(dumping_data)+1):
@@ -128,4 +127,4 @@ def sync_xl(data):
     ledger_wb.save('./functions/ledger.xlsx')
 
 
-# print(mine('3/1e-15,?:spuckhafte_ferwirklung#7109(2212202119)/2005cc89e900928d541c57c0776992efb60b6a60a3566780d531bbcdb974f23e/nonce'))
+# print(mine('1/1.0,?:spuckhafte_ferwirklung#7109(2212202120)/0000000000000000000000000000000000000000000000000000000000000000/nonce'))
