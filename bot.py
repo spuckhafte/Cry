@@ -68,7 +68,6 @@ async def on_message(msg):
                 able = False
                 pending_string = None
                 user_not_found = True
-                cries_are_valid = False
                 with open('members.json', 'r') as able_or_not:
                     infile = json.load(able_or_not)
                 for user in infile['users']:
@@ -80,17 +79,23 @@ async def on_message(msg):
 
                 if able:
                     content = msg.content.split('-')
+                    content.remove('cry')
+                    content.remove('send')
                     var = datetime.now()
-                    amount = content[2]
+                    to_ = content.pop()
                     from_ = str(msg.author)
-                    to_ = content[3]
+                    amount = '-'.join(content)
                     event = f'{var.day}{var.month}{var.year}{var.hour}'
                     export_details = {
                         'cries': amount, 'from': from_, 'to': to_, 'event': event
                     }
 
-                    if amount.isnumeric():
-                        cries_are_valid = True
+                    is_floatable = False
+                    try:
+                        float(amount)
+                        is_floatable = True
+                    except ValueError:
+                        is_floatable = False
 
                     if from_ != to_:
                         with open('members.json', 'r') as infile:
@@ -100,7 +105,7 @@ async def on_message(msg):
                             if user['username'] == to_:
                                 user_not_found = False
 
-                        if user_not_found is False and cries_are_valid:
+                        if user_not_found is False and is_floatable:
                             for user in infile['users']:
                                 if user['username'] == str(msg.author):
                                     if float(user['cries']) >= float(amount):
@@ -117,7 +122,7 @@ async def on_message(msg):
                                         break
                         if user_not_found:
                             await msg.reply(f'**No such user: `{to_}`**')
-                        if cries_are_valid is False:
+                        if is_floatable is False:
                             await msg.reply('**Cries you requested for transaction are not valid, not a number**')
                     else:
                         await msg.reply('**You cannot send `cries` to yourself**')
