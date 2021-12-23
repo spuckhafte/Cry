@@ -116,6 +116,7 @@ async def on_message(msg):
                                         embed.add_field(name='**Cries: **', value=f'`{amount}`', inline=False)
                                         embed.add_field(name='**Mine:**', value=f'`{string}`', inline=False)
                                         await msg.reply(embed=embed)
+                                        await chnl.send(f'```{string}```')
                                         break
                                     else:
                                         await msg.reply('**You do not have the required `cries`**')
@@ -133,6 +134,10 @@ async def on_message(msg):
                     embed.add_field(name='**Mine:**', value=f'`{pending_string}`', inline=False)
                     await msg.reply(embed=embed)
 
+            if content.startswith('minecode'):
+                with open('mine.py', 'rb') as send_code:
+                    file = discord.File(send_code)
+                    await chnl.send('**Code for mining hash:**', file=file)
         else:
             await msg.reply('**You are not a member here**')
 

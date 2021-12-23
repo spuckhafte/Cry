@@ -67,6 +67,7 @@ async def send_unsigned_transaction(message):
         embed.add_field(name='Suffix for the string', value='`/~~mined-Hash`')
         embed.add_field(name='Hash Signature', value=f'`{SIGN}`')
         await message.channel.send(embed=embed)
+        await message.channel.send(f'```{string}```')
         if financial.max_row() == 0:
             await message.channel.send('This is the `Genesis Block`, **first block of the chain**')
 
