@@ -4,8 +4,7 @@
 Bot based on **Block Chain Technology**<br>
 Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_<br>
 
-Earn **cries** out of thin air by **mining hash** to make the validate a transaction and make it follow certain rule
-<hr></hr>
+Earn **cries** out of thin air by **mining hash** to make the validate a transaction and make it follow certain rule<br>
 ### Commands:
 `cry-join`: join the ecosystem<br>
 `cry-ledger`: get current public ledger<br>
