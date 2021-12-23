@@ -1,9 +1,18 @@
 {
     "users": [
-
+        {
+            "username": "spuckhafte_ferwirklung#7109",
+            "cries": "3.749659198247581e-08",
+            "able": "1",
+            "pending-string": ""
+        },
+        {
+            "username": "Ayano#3463",
+            "cries": "1.0",
+            "able": "1",
+            "pending-string": ""
+        }
     ],
-    "current-unmined-string": [
-
-    ],
-    "last-activity": ""
+    "current-unmined-string": [],
+    "last-activity": "2021/12/23 2:7:15"
 }

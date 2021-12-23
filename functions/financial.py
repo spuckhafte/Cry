@@ -127,4 +127,4 @@ def sync_xl(data):
     ledger_wb.save('./functions/ledger.xlsx')
 
 
-# print(mine('5/1,spuckhafte_ferwirklung#7109:Ayano#3463(231220211)/2005cc0d068204cfffbc3208e688d9cc321b130d618670666f846780ba4c1370/nonce'))
+# print(mine('2/1,spuckhafte_ferwirklung#7109:Ayano#3463(231220212)/2005cce2777be4eb4c770fb377d4963b8a24b72ae10a43fd97aaeb33f8dfa5cb/nonce'))

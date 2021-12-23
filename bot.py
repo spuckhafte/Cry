@@ -38,7 +38,7 @@ async def on_message(msg):
                 member = True
 
         if str(msg.author) in names or member is True:
-            if content == 'send ledger':
+            if content == 'ledger':
                 with open("functions/ledger.xlsx", 'rb') as file:
                     ledger = discord.File(file)
                     await msg.author.send("Public ledger:", file=ledger)
@@ -67,6 +67,8 @@ async def on_message(msg):
             if content.startswith('send'):
                 able = False
                 pending_string = None
+                user_not_found = True
+                cries_are_valid = False
                 with open('members.json', 'r') as able_or_not:
                     infile = json.load(able_or_not)
                 for user in infile['users']:
@@ -87,31 +89,44 @@ async def on_message(msg):
                         'cries': amount, 'from': from_, 'to': to_, 'event': event
                     }
 
+                    if amount.isnumeric():
+                        cries_are_valid = True
+
                     if from_ != to_:
                         with open('members.json', 'r') as infile:
                             infile = json.load(infile)
+
                         for user in infile['users']:
-                            if user['username'] == str(msg.author):
-                                if float(user['cries']) >= float(amount):
-                                    string = await bot_funcs.cries_transaction(export_details)
-                                    embed = discord.Embed(title='Transaction Successful')
-                                    embed.add_field(name='**From:**', value=f'`{from_}`')
-                                    embed.add_field(name='**To:**', value=f'`{to_}`')
-                                    embed.add_field(name='**Cries: **', value=f'`{amount}`', inline=False)
-                                    embed.add_field(name='**Mine:**', value=f'`{string}`', inline=False)
-                                    await msg.reply(embed=embed)
-                                    break
-                                else:
-                                    await msg.reply('**You do not have the required `cries`**')
-                                    break
+                            if user['username'] == to_:
+                                user_not_found = False
+
+                        if user_not_found is False and cries_are_valid:
+                            for user in infile['users']:
+                                if user['username'] == str(msg.author):
+                                    if float(user['cries']) >= float(amount):
+                                        string = await bot_funcs.cries_transaction(export_details)
+                                        embed = discord.Embed(title='Transaction Successful')
+                                        embed.add_field(name='**From:**', value=f'`{from_}`')
+                                        embed.add_field(name='**To:**', value=f'`{to_}`')
+                                        embed.add_field(name='**Cries: **', value=f'`{amount}`', inline=False)
+                                        embed.add_field(name='**Mine:**', value=f'`{string}`', inline=False)
+                                        await msg.reply(embed=embed)
+                                        break
+                                    else:
+                                        await msg.reply('**You do not have the required `cries`**')
+                                        break
+                        if user_not_found:
+                            await msg.reply(f'**No such user: `{to_}`**')
+                        if cries_are_valid is False:
+                            await msg.reply('**Cries you requested for transaction are not valid, not a number**')
                     else:
                         await msg.reply('**You cannot send `cries` to yourself**')
+
                 else:
                     embed = discord.Embed(title='Pending Invalidated Transaction')
                     embed.add_field(name='**Username:**', value=f'`{msg.author}`', inline=False)
                     embed.add_field(name='**Mine:**', value=f'`{pending_string}`', inline=False)
                     await msg.reply(embed=embed)
-
 
         else:
             await msg.reply('**You are not a member here**')
