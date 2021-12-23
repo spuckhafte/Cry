@@ -127,4 +127,13 @@ def sync_xl(data):
     ledger_wb.save('./functions/ledger.xlsx')
 
 
-print(mine('4/3.749659198247581e-08,spuckhafte_ferwirklung#7109:ARGØN#0699(2312202117)/2005cc8414bd4d358f7d1fdc77fd04d17ac3f6ffae77a2a31a3c49b7b71890bb/nonce'))
+async def check_hash_availiblity(hash_check):
+    available = True
+    for i in range(1, max_row()+1):
+        if ledger_sheet.cell(i, 8).value == hash_check:
+            available = False
+            break
+    return available
+
+
+# print(mine('4/3.749659198247581e-08,spuckhafte_ferwirklung#7109:ARGØN#0699(2312202117)/2005cc8414bd4d358f7d1fdc77fd04d17ac3f6ffae77a2a31a3c49b7b71890bb/nonce'))

@@ -85,60 +85,70 @@ async def check_mine(message):
     user_mined_string = user_mined_string.split('/')
 
     user_mined_hash = user_mined_string.pop()
+
+    check_availability = list(user_mined_hash)
+    check_availability.remove('~')
+    check_availability.remove('~')
+    check_availability = ''.join(check_availability)
+
     user_mined_string = '/'.join(user_mined_string)
     user_mined_string_to_hash = f'~~{financial.EncDeEnc(deEncrypted=user_mined_string).hash_encrypt()}'
 
-    with open('members.json', 'r') as infile:
-        infile = json.load(infile)
-    current_hash = infile['current-unmined-string'][0].split('/')
-    current_hash.pop()
-    current_hash = '/'.join(current_hash)
-
-    if user_mined_hash == user_mined_string_to_hash and user_mined_hash.startswith(f'~~{SIGN}') \
-            and user_mined_string.startswith(current_hash):
-        if financial.max_row() == 0:
-            await message.channel.send(f'Eureka, First block created by {message.author.mention}')
-
-        details = ''.join(user_mined_string.split('/')[1]).split(':')
-        amount, from_ = ''.join(details[0]).split(',')[0], ''.join(details[0]).split(',')[1]
-        to_, event = ''.join(details[1]).split('(')[0], ''.join(details[1]).split('(')[1].split(')')[0]
-        last_hash = financial.previous_hash()
-        user_mined_hash = list(user_mined_hash)
-        user_mined_hash.remove('~')
-        user_mined_hash.remove('~')
-        user_mined_hash = ''.join(user_mined_hash)
-        export_data = {
-            'transaction_string': user_mined_string,
-            'author': str(message.author),
-            'amount': str(amount), 'to': to_, 'from': from_, 'event': event,
-            'last-hash': last_hash, 'string': user_mined_string, 'hash': user_mined_hash
-        }
-        cries = await award_user(export_data)
-        await message.channel.send(f'{message.author.mention} **Congo, You got: `{float(cries)} cries`**')
-        financial.sync_xl(export_data)
-
+    if await financial.check_hash_availiblity(check_availability):
         with open('members.json', 'r') as infile:
             infile = json.load(infile)
-        with open('members.json', 'w') as outfile:
-            for string in infile['current-unmined-string']:
-                string = string.split('/')
-                string.pop()
-                string = '/'.join(string)
-                if user_mined_string.startswith(string):
-                    infile['current-unmined-string'].remove(string+'/nonce')
-            if '?' not in user_mined_string:
-                if str(message.author) in user_mined_string.split('/')[1].split(':')[0]:
-                    for user in infile['users']:
-                        if user['username'] == str(message.author):
-                            user['pending-string'] = ''
-                            user['able'] = "1"
-            json.dump(infile, outfile, indent=4)
 
-        with open("functions/ledger.xlsx", 'rb') as file:
-            ledger = discord.File(file)
-            await message.channel.send("Public ledger - updated:", file=ledger)
+        current_hash = infile['current-unmined-string'][0].split('/')
+        current_hash.pop()
+        current_hash = '/'.join(current_hash)
+
+        if user_mined_hash == user_mined_string_to_hash and user_mined_hash.startswith(f'~~{SIGN}') \
+                and user_mined_string.startswith(current_hash):
+            if financial.max_row() == 0:
+                await message.channel.send(f'Eureka, First block created by {message.author.mention}')
+
+            details = ''.join(user_mined_string.split('/')[1]).split(':')
+            amount, from_ = ''.join(details[0]).split(',')[0], ''.join(details[0]).split(',')[1]
+            to_, event = ''.join(details[1]).split('(')[0], ''.join(details[1]).split('(')[1].split(')')[0]
+            last_hash = financial.previous_hash()
+            user_mined_hash = list(user_mined_hash)
+            user_mined_hash.remove('~')
+            user_mined_hash.remove('~')
+            user_mined_hash = ''.join(user_mined_hash)
+            export_data = {
+                'transaction_string': user_mined_string,
+                'author': str(message.author),
+                'amount': str(amount), 'to': to_, 'from': from_, 'event': event,
+                'last-hash': last_hash, 'string': user_mined_string, 'hash': user_mined_hash
+            }
+            cries = await award_user(export_data)
+            await message.channel.send(f'{message.author.mention} **Congo, You got: `{float(cries)} cries`**')
+            financial.sync_xl(export_data)
+
+            with open('members.json', 'r') as infile:
+                infile = json.load(infile)
+            with open('members.json', 'w') as outfile:
+                for string in infile['current-unmined-string']:
+                    string = string.split('/')
+                    string.pop()
+                    string = '/'.join(string)
+                    if user_mined_string.startswith(string):
+                        infile['current-unmined-string'].remove(string+'/nonce')
+                if '?' not in user_mined_string:
+                    if str(message.author) in user_mined_string.split('/')[1].split(':')[0]:
+                        for user in infile['users']:
+                            if user['username'] == str(message.author):
+                                user['pending-string'] = ''
+                                user['able'] = "1"
+                json.dump(infile, outfile, indent=4)
+
+            with open("functions/ledger.xlsx", 'rb') as file:
+                ledger = discord.File(file)
+                await message.channel.send("Public ledger - updated:", file=ledger)
+        else:
+            await message.channel.send('**Wrong Hash**')
     else:
-        await message.channel.send('**Wrong Hash**')
+        await message.channel.send('**Hash is already mined**')
 
 
 async def award_user(data):
