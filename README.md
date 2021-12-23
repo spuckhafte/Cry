@@ -1,22 +1,22 @@
 # Cry ©
 ## Cry (a crypto-bot)
 
-Bot based on **Block Chain Technology**
-Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_
+Bot based on **Block Chain Technology**<br>
+Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_<br>
 
-Earn **cries** out of thin air by **mining hash** to make the validate a transaction and make it follow certain rule
+Earn **cries** out of thin air by **mining hash** to make the validate a transaction and make it follow certain rule<br><br>
 
 ### Commands:
-`cry-join`: join the ecosystem
-`cry-ledger`: get current public ledger
-`cry-mine`: get the transaction details to mine _(details are either of a **user-to-user transaction** or of a **?-to-random_user transaction**)_
-`cry-mined-correct_stringfied_details`: send the mined details to bot in order to get reward (if correct) and validate the transaction
-`cry-minecode`: get a python program to mine stringfied details of transactions
-`cry-me`: get your details
-`cry-send-0.001-someone#0000`: send 0.001 **cries** to  **someone#0000**  _(details of of this transaction are invalid and needs to get mined, till then the **cries** sender can't make other transactions, but can still mine)_
+`cry-join`: join the ecosystem<br>
+`cry-ledger`: get current public ledger<br>
+`cry-mine`: get the transaction details to mine _(details are either of a **user-to-user transaction** or of a **?-to-random_user transaction**)_<br>
+`cry-mined-correct_stringfied_details`: send the mined details to bot in order to get reward (if correct) and validate the transaction<br>
+`cry-minecode`: get a python program to mine stringfied details of transactions<br>
+`cry-me`: get your details<br>
+`cry-send-0.001-someone#0000`: send 0.001 **cries** to  **someone#0000**  _(details of of this transaction are invalid and needs to get mined, till then the **cries** sender can't make other transactions, but can still mine)_<br>
 
-When a stringified detail gets mined, the transaction becomes valid and gets added to the public ledger with details of **current transaction** and the **hash of the previous transaction**
-
+When a stringified detail gets mined, the transaction becomes valid and gets added to the public ledger with details of **current transaction** and the **hash of the previous transaction**<br>
+<br>
 ### Demo:
 ##### 1. Join the ecosystem:
 ![alt text](https://cdn.discordapp.com/attachments/922107628845404190/923637238959575090/Screenshot_2021-12-23_231542.jpg)
