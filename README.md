@@ -3,9 +3,11 @@
 
 Bot based on **Block Chain Technology**<br>
 Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_<br>
+Invite: https://discord.com/api/oauth2/authorize?client_id=922054120809058324&permissions=8&scope=bot
 
 Earn **cries** out of thin air by **mining hash** to validate a transaction and to make it follow certain rule<br>
 ### Commands:
+**PREFIX**: <kbd>cry-</kbd>
 `cry-join`: join the ecosystem<br>
 `cry-ledger`: get current public ledger<br>
 `cry-mine`: get the transaction details to mine _(details are either of a **user-to-user transaction** or of a **?-to-random_user transaction**)_<br>
