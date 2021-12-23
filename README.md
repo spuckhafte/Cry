@@ -4,7 +4,7 @@
 Bot based on **Block Chain Technology**<br>
 Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_<br>
 Invite: https://discord.com/api/oauth2/authorize?client_id=922054120809058324&permissions=8&scope=bot<br>
-Upvote it: discord.ly/cry-0078
+Upvote it: https://discord.ly/cry-0078
 
 Earn **cries** out of thin air by **mining hash** to validate a transaction and to make it follow certain rule<br>
 ### Commands:
