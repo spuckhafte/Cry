@@ -234,7 +234,16 @@ async def extract_data_from_string(transaction_string):
 
 
 async def cries_transaction(data):
-    index, amount, from_, to_, event = financial.max_row()+1, data['cries'], data['from'], data['to'], data['event']
+    with open('members.json', 'r') as infile:
+        infile = json.load(infile)
+    if len(infile['current-unmined-string']) != 0:
+        last_string = infile['current-unmined-string'].pop()
+        last_index = last_string.split('/')[0]
+        index = int(last_index) + 1
+    else:
+        index = financial.max_row() + 1
+
+    index, amount, from_, to_, event = index, data['cries'], data['from'], data['to'], data['event']
     prev_hash = financial.previous_hash()
     transaction_string = f'{index}/{amount},{from_}:{to_}({event})/{prev_hash}/nonce'
 
