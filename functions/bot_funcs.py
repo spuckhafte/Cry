@@ -7,35 +7,31 @@ from functions import financial
 FACTOR = Behaviour.cry_factor
 SIGN = Behaviour.hash_sign
 TIMEOUT = Behaviour.time_out
+STRING_CHANNEL_ID = Behaviour.new_string_channel_id
 
 
 async def join(message):
-    chnl = message.channel
-    user_info = {
-        'username': str(message.author),
-        'cries': '0',
-        'able': '1',
-        'pending-string': ''
-    }
-
-    with open('members.json', 'r') as members_list_read:
-        users_info = json.load(members_list_read)
-
-    for user in users_info['users']:
+    proceed = True
+    with open('members.json', 'r') as infile:
+        infile = json.load(infile)
+    for user in infile['users']:
         if user['username'] == str(message.author):
-            await chnl.send("Already a member!")
-            return
+            proceed = False
+            break
 
-    users_info['users'].append(user_info)
+    if proceed:
+        with open('editing_user.json', 'r') as infile:
+            infile = json.load(infile)
+        infile['password_candidates'].append(str(message.author))
+        with open('editing_user.json', 'w') as outfile:
+            json.dump(infile, outfile)
+        await message.author.send('**Create password** (more than 4 characters)\n`cry-pass-your_password` *password should not have dashes(-)*')
+        await message.add_reaction('👍')
+    else:
+        await message.reply('Already a member!')
 
-    json_users_info = json.dumps(users_info, indent=4)
-    with open("members.json", "w") as member_list_write:
-        member_list_write.write(json_users_info)
 
-    await chnl.send('**Welcome, Public ledger has been sent to you privately**')
-
-
-async def send_unsigned_transaction(message):
+async def send_unsigned_transaction(message, Client):
     genesis = False
     string = None
     with open('members.json', 'r') as file_transactions:
@@ -68,11 +64,12 @@ async def send_unsigned_transaction(message):
         embed.add_field(name='Hash Signature', value=f'`{SIGN}`')
         await message.channel.send(embed=embed)
         await message.channel.send(f'```{string}```')
+        await Client.get_channel(STRING_CHANNEL_ID).send(f'New string:```{string}```')
         if financial.max_row() == 0:
             await message.channel.send('This is the `Genesis Block`, **first block of the chain**')
 
 
-async def check_mine(message):
+async def check_mine(message, ledger_channel):
     user_mined_string = message.content.split('-')
     user_mined_string.remove('cry')
     user_mined_string.remove('mined')
@@ -98,7 +95,8 @@ async def check_mine(message):
         with open('members.json', 'r') as infile:
             infile = json.load(infile)
 
-        current_hash = infile['current-unmined-string'][0].split('/')
+        current_string = infile['current-unmined-string'][0]
+        current_hash = current_string.split('/')
         current_hash.pop()
         current_hash = '/'.join(current_hash)
 
@@ -144,8 +142,10 @@ async def check_mine(message):
 
             with open("functions/ledger.xlsx", 'rb') as file:
                 ledger = discord.File(file)
-                await message.channel.send("Public ledger - updated:", file=ledger)
+                await ledger_channel.send("Public ledger - updated:", file=ledger)
         else:
+            if not user_mined_string.startswith(current_hash):
+                await message.channel.send(f'Wrong string mined.\nMine: `{current_string}`\n*Order for mining is being followed here*')
             await message.channel.send('**Wrong Hash**')
     else:
         await message.channel.send('**Hash is already mined**')
