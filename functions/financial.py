@@ -20,7 +20,7 @@ except FileNotFoundError:
         ledger_wb = xl.load_workbook(outfile)
 ledger_sheet = ledger_wb['Sheet1']
 
-# 1 CryCoin = $100 = Rs.7601
+# 1 CryCoin = $100 = Rs.7601 # LOL
 
 # value of the entity
 info = {
@@ -47,6 +47,9 @@ class EncDeEnc:
         return enc
 
 
+# print(EncDeEnc(deEncrypted='hesoyam').hash_encrypt())
+
+
 def mine(transaction_data):
     array_transaction_data = transaction_data.split('/')
     if len(array_transaction_data) > 3:
@@ -67,6 +70,7 @@ def mine(transaction_data):
         else:
             i += 1
 
+# print(mine('14/1e-15,?:argøn#0699(7120227)/2005cc6fa9afa76cf841925687839c96f2ba8ef28cc89dc2f3aad57cecfa53cd/nonce'))
 
 def max_row():
     return ledger_sheet.max_row - 1
