@@ -3,7 +3,7 @@
 
 Bot based on **Block Chain Technology**<br>
 Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_<br>
-Join the official server to access it: https://discord.gg/DHxRjGGW8j<br>
+Join the official server to access and learn it: https://discord.gg/DHxRjGGW8j<br>
 Upvote it: https://discord.ly/cry-0078
 
 Earn **cries** out of thin air by **mining hash** to validate a transaction and to make it follow certain rule<br>
