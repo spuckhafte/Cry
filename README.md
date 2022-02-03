@@ -1,7 +1,7 @@
 # Cry ©
 ## Cry (a crypto-bot)
 
-Bot based on **Block Chain Technology**<br>
+Bot based on **BlockChain Technology**<br>
 Cryptocurrency - named **cries** _(eg. 1 cries, 10e-14 cries)_<br>
 Join the official server to access and learn it: https://discord.gg/DHxRjGGW8j<br>
 Upvote it: https://discord.ly/cry-0078
