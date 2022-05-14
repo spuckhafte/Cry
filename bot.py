@@ -2,16 +2,25 @@ import json
 from datetime import datetime
 
 import discord
-from functions import bot_funcs, financial
+from functions import bot_funcs
 from bot_bio import Behaviour
+from store import Store
 
 TOKEN = Behaviour.bot_token
 PREFIX = Behaviour.bot_prefix
-GEN_CAT_ID = Behaviour.general_channel_category_id
-HELP_ID = Behaviour.help_chnl_id
-LOG_ID = Behaviour.log_chnl_id
+
+AVL_CAT_CHN_ID = Behaviour.available_cats_channels
+UNAVL_CHN_ID = Behaviour.unavailable_channels
+LOG_IDS = Behaviour.log_chnl_id
+
 client = discord.Client()
 
+emoji_dict = {
+    "food": ":apple:",
+    "elect": ":computer:",
+    "clothes": ":shirt:",
+    "other": ":toothbrush:"
+}
 
 @client.event
 async def on_ready():
@@ -23,156 +32,15 @@ async def on_message(msg):
     member = False
     chnl = msg.channel
 
-    if str(msg.channel.type == 'private') and int(msg.channel.id) != HELP_ID:
-        with open('editing_user.json', 'r') as infile:
-            infile = json.load(infile)
-        if str(msg.author) in infile['update_users']:
-            if msg.content != 'cry-help-stop' or msg.content.startswith('cry-help-mod') is False:
-                try:
-                    password = financial.EncDeEnc(deEncrypted=msg.content.split(',')[0]).hash_encrypt()
-                    old_name = msg.content.split(',')[1]
-                    user_found = False
-                    with open('members.json', 'r') as members:
-                        members = json.load(members)
-                    for user in members['users']:
-                        if user['password'] == password and user['username'] == old_name:
-                            user_found = True
-                            user['username'] = str(msg.author)
-                            break
-                    with open('members.json', 'w') as outfile:
-                        json.dump(members, outfile, indent=4)
+    if str(msg.channel.type) == 'private' and msg.guild is None:
+        await bot_funcs.private(msg)
 
-                    if user_found:
-                        with open('editing_user.json', 'r') as infile_2:
-                            infile_2 = json.load(infile_2)
-                        infile_2['update_users'].remove(str(msg.author))
-                        with open('editing_user.json', 'w') as outfile_2:
-                            json.dump(infile_2, outfile_2, indent=4)
-                        await msg.author.send('Username updated!')
-                    else:
-                        with open('editing_user.json', 'r') as infile_2:
-                            infile_2 = json.load(infile_2)
-                        infile_2['update_users'].remove(str(msg.author))
-                        with open('editing_user.json', 'w') as outfile_2:
-                            json.dump(infile_2, outfile_2, indent=4)
-                        await chnl.send('**Wrong password/old_username, or you never existed in this ecosystem**')
-                        await chnl.send('Process Terminated!!!')
-
-                except:
-                    with open('editing_user.json', 'r') as infile_2:
-                        infile_2 = json.load(infile_2)
-                    infile_2['update_users'].remove(str(msg.author))
-                    with open('editing_user.json', 'w') as outfile_2:
-                        json.dump(infile_2, outfile_2, indent=4)
-                    await chnl.send('Process Terminated')
-
-            if msg.content == 'cry-help-stop':
-                with open('editing_user.json', 'r') as infile_2:
-                    infile_2 = json.load(infile_2)
-                infile_2['update_users'].remove(str(msg.author))
-                with open('editing_user.json', 'w') as outfile_2:
-                    json.dump(infile_2, outfile_2, indent=4)
-                await chnl.send('Process Terminated!')
-
-            if msg.content.startswith('cry-help-mod'):
-                with open('editing_user.json', 'r') as infile_2:
-                    infile_2 = json.load(infile_2)
-                infile_2['update-users'].remove(str(msg.author))
-                with open('editing_user.json', 'w') as outfile_2:
-                    json.dump(infile_2, outfile_2, indent=4)
-                msg_arr = msg.content.split('-')
-                if len(msg_arr) > 3:
-                    query = msg_arr.pop()
-                    channel = client.get_channel(HELP_ID)
-                    await channel.send(f'{str(msg.author.mention)} says, **\"{query}\"** ')
-                    await msg.add_reaction('👍')
-                await chnl.send('Process Terminated')
-
-        if str(msg.author) in infile['password_candidates']:
-            if msg.content.startswith('cry-pass-'):
-                password_arr = msg.content.split('-')
-                password_arr.remove('cry')
-                password_arr.remove('pass')
-                password_string = ''.join(password_arr)
-                password = financial.EncDeEnc(deEncrypted=password_string).hash_encrypt()
-
-                proceed = True
-                with open('members.json', 'r') as infile:
-                    infile = json.load(infile)
-                for user in infile['users']:
-                    if user['password'] == password:
-                        proceed = False
-                        break
-
-                if len(password_string) < 4:
-                    proceed = False
-
-                if proceed:
-                    await msg.channel.send(f'Your password: {password_string}')
-                    user_info = {
-                        'username': str(msg.author),
-                        'cries': '0',
-                        'password': password,
-                        'able': '1',
-                        'pending-string': ''
-                    }
-
-                    with open('members.json', 'r') as members_list_read:
-                        users_info = json.load(members_list_read)
-
-                    users_info['users'].append(user_info)
-
-                    json_users_info = json.dumps(users_info, indent=4)
-                    with open("members.json", "w") as member_list_write:
-                        member_list_write.write(json_users_info)
-
-                    with open('editing_user.json', 'r') as infile:
-                        infile = json.load(infile)
-                    infile['password_candidates'].remove(str(msg.author))
-                    with open('editing_user.json', 'w') as outfile:
-                        json.dump(infile, outfile, indent=4)
-
-                    with open("functions/ledger.xlsx", 'rb') as file:
-                        ledger = discord.File(file)
-                        await msg.channel.send("**Welcome, this is the Public Ledger:**", file=ledger)
-                else:
-                    with open('editing_user.json', 'r') as infile:
-                        infile = json.load(infile)
-                    infile['password_candidates'].remove(str(msg.author))
-                    with open('editing_user.json', 'w') as outfile:
-                        json.dump(infile, outfile, indent=4)
-
-                    if len(password_string) < 4:
-                        await chnl.send('Password should have **4 or more characters** and should **not contain dashes(-)**\n**Process Terminated!**')
-                    else:
-                        await chnl.send('This password is already being used by someone.\n**Process Terminated!**')
-
-            if msg.content == 'cry-help-stop':
-                with open('editing_user.json', 'r') as infile_2:
-                    infile_2 = json.load(infile_2)
-                infile_2['password_candidates'].remove(str(msg.author))
-                with open('editing_user.json', 'w') as outfile_2:
-                    json.dump(infile_2, outfile_2, indent=4)
-                await chnl.send('Process Terminated!')
-
-            if msg.content.startswith('cry-help-mod'):
-                with open('editing_user.json', 'r') as infile_2:
-                    infile_2 = json.load(infile_2)
-                infile_2['password_candidates'].remove(str(msg.author))
-                with open('editing_user.json', 'w') as outfile_2:
-                    json.dump(infile_2, outfile_2, indent=4)
-                msg_arr = msg.content.split('-')
-                if len(msg_arr) > 3:
-                    query = msg_arr.pop()
-                    channel = client.get_channel(HELP_ID)
-                    await channel.send(f'{str(msg.author.mention)} says, **\"{query}\"** ')
-                    await msg.add_reaction('👍')
-                await chnl.send('Process Terminated')
-
-    if msg.content.startswith(PREFIX) and str(msg.channel.type) != 'private' and msg.channel.category.id != GEN_CAT_ID:
+    if msg.content.startswith(PREFIX) and str(msg.channel.type) != 'private' and \
+            (msg.channel.category.id in AVL_CAT_CHN_ID or msg.channel.id in AVL_CAT_CHN_ID) and \
+            msg.channel.id not in UNAVL_CHN_ID:
         content = msg.content.split('-')
         content.remove('cry')
-        content = ''.join(content).lower()
+        content = '-'.join(content).lower()
 
         names = []
         with open('members.json', 'r') as users_info:
@@ -187,34 +55,64 @@ async def on_message(msg):
 
         if not joining:
             if str(msg.author) in names or member is True:
-                if content == 'ledger':
+                if content == 'ledger':  # get ledger
                     with open("functions/ledger.xlsx", 'rb') as file:
                         ledger = discord.File(file)
                         await msg.author.send("Public ledger:", file=ledger)
 
-                elif content == 'mine':
+                elif content == 'mine':  # get details to mine
                     check_for_mine = await bot_funcs.check_for_mine()
                     if check_for_mine[0]:
                         await bot_funcs.send_unsigned_transaction(msg, client)
                     else:
                         await chnl.send(f'**Wait**: `{check_for_mine[1]}/5 minutes`')
 
-                elif content.startswith('mined'):
-                    ledger_channel = client.get_channel(LOG_ID)
-                    await bot_funcs.check_mine(msg, ledger_channel)
+                elif content.startswith('mined'):  # check the mined transactions
+                    ledger_channels = [client.get_channel(LOG_ID) for LOG_ID in LOG_IDS ]
+                    await bot_funcs.check_mine(msg, ledger_channels)
 
-                elif content.startswith('me'):
+                elif content.startswith('me'):  # your info
                     with open('members.json', 'r') as details:
                         details = json.load(details)
-                    for user in details['users']:
-                        if user['username'] == str(msg.author):
-                            embed = discord.Embed(title='User Detail')
-                            embed.add_field(name='**Username:**', value=f"`{user['username']}`", inline=False)
-                            embed.add_field(name='**Cries:**', value=f"`{user['cries']}`", inline=False)
-                            await msg.reply(embed=embed)
-                            break
+                        if len(content.split('-')) == 1:
+                            for user in details['users']:
+                                if user['username'] == str(msg.author):
+                                    items = user['items']
+                                    if len(items.keys()) == 0:
+                                        items = 'None'
+                                    else:
+                                        items_text = ''
+                                        for item in items:
+                                            items_text += f'{item}: {items[item]}\n'
+                                        items = items_text
 
-                elif content.startswith('send'):
+                                    embed = discord.Embed(title='User Detail')
+                                    embed.add_field(name='**Username:**', value=f"`{user['username']}`", inline=False)
+                                    embed.add_field(name='**Cries:**', value=f"`{user['cries']}`", inline=False)
+                                    embed.add_field(name='**Items:**', value=f"`{items}`", inline=False)
+                                    await msg.reply(embed=embed)
+                                    break
+                        else:
+                            username = msg.content.split('-')[2]
+                            for user in details['users']:
+                                if user['username'] == username:
+                                    items = user['items']
+                                    if len(items.keys()) == 0:
+                                        items = 'None'
+                                    else:
+                                        items_text = ''
+                                        for item in items:
+                                            items_text += f'{item}: {items[item]}\n'
+                                        items = items_text
+
+                                    embed = discord.Embed(title='User Detail')
+                                    embed.add_field(name='**Username:**', value=f"`{user['username']}`", inline=False)
+                                    embed.add_field(name='**Cries:**', value=f"`{user['cries']}`", inline=False)
+                                    embed.add_field(name='**Items:**', value=f"`{items}`", inline=False)
+                                    await msg.reply(embed=embed)
+                                    break
+
+                elif content.startswith('send'):  # send cries to another user
                     able = False
                     pending_string = None
                     user_not_found = True
@@ -240,7 +138,6 @@ async def on_message(msg):
                             'cries': amount, 'from': from_, 'to': to_, 'event': event
                         }
 
-                        is_floatable = False
                         try:
                             float(amount)
                             is_floatable = True
@@ -267,7 +164,8 @@ async def on_message(msg):
                                             embed.add_field(name='**Mine:**', value=f'`{string}`', inline=False)
                                             await msg.reply(embed=embed)
                                             await chnl.send(f'```{string}```')
-                                            await client.get_channel(LOG_ID).send(f'New String: ```{string}```')
+                                            for LOG_ID in LOG_IDS:
+                                                await client.get_channel(LOG_ID).send(f'New String: ```{string}```')
                                             break
                                         else:
                                             await msg.reply('**You do not have the required `cries`**')
@@ -284,7 +182,67 @@ async def on_message(msg):
                         embed.add_field(name='**Username:**', value=f'`{msg.author}`', inline=False)
                         embed.add_field(name='**Mine:**', value=f'`{pending_string}`', inline=False)
                         await msg.reply(embed=embed)
-                        await client.get_channel(LOG_ID).send(f'String: ```{pending_string}```')
+                        for LOG_ID in LOG_IDS:
+                            await client.get_channel(LOG_ID).send(f'String: ```{pending_string}```')
+
+                elif content.startswith('store'):  # currently, working for this
+                    content = content.split('-')
+                    if len(content) == 1:
+                        embed = discord.Embed(title=':shopping_bags: STORE')
+                        embed.add_field(name='**:apple: Food**', value="`cry-store-food`")
+                        embed.add_field(name='**:shirt: Clothing**', value="`cry-store-fabric`")
+                        embed.add_field(name='**:computer: Electronics**', value="`cry-store-elect`")
+                        embed.add_field(name='**:toothbrush: Others**', value="`cry-store-other`")
+                        await chnl.send(embed=embed)
+                    else:
+                        content.pop(0)
+                        title = ':shopping_bags: STORE'
+                        genre = content[0]
+                        text = ':exclamation:Wrong Genre'
+                        if content[0].startswith('food'):
+                            text = ''
+                            foods = Store.food
+                            for food in foods.keys():
+                                text += f'**{food}:** `{foods[food]} cries`\n'
+                        if content[0].startswith('fab'):
+                            text = ''
+                            clothes = Store.clothing
+                            for cloth in clothes.keys():
+                                text += f'**{cloth}:** `{clothes[cloth]} cries`\n'
+                        if content[0].startswith('elec'):
+                            text = ''
+                            elect = Store.electronic
+                            for elec in elect.keys():
+                                text += f'**{elec}:** `{elect[elec]} cries`\n'
+                        if content[0].startswith('other'):
+                            text = ''
+                            others = Store.other
+                            for other in others.keys():
+                                text += f'**{other}:** `{others[other]} cries`\n'
+                        embed = discord.Embed(title=title)
+                        try:
+                            genre_ = genre
+                            if genre.startswith('elec'):
+                                genre_ = 'Electronics'
+                                genre = 'elect'
+                            if genre.startswith('fab'):
+                                genre_ = 'Clothing'
+                                genre = 'clothes'
+                            if genre.startswith('food'):
+                                genre_ = 'Food'
+                                genre = 'food'
+                            if genre.startswith('other'):
+                                genre_ = 'Others'
+                                genre = 'other'
+                            embed.add_field(name=f'**{emoji_dict[genre]} {genre_}:**', value=text)
+                        except KeyError:
+                            embed.add_field(name=f'**{genre}:**', value=text)
+                        await chnl.send(embed=embed)
+
+                elif content.startswith('buy'):
+                    content = content.split('-')
+                    if len(content) == 2:
+                        await bot_funcs.buy_item(msg, content[1], msg.author, client, LOG_IDS)
 
                 elif content.startswith('minecode'):
                     with open('mine.py', 'rb') as send_code:
@@ -294,7 +252,7 @@ async def on_message(msg):
                 else:
                     await chnl.send('**Wrong or Misunderstood command**')
 
-            elif content == 'update':
+            elif content == 'update':  # update user
                 proceed = True
                 with open('members.json', 'r') as members:
                     members = json.load(members)
