@@ -20,7 +20,7 @@ except FileNotFoundError:
         ledger_wb = xl.load_workbook(outfile)
 ledger_sheet = ledger_wb['Sheet1']
 
-# 1 CryCoin = $100 = Rs.7601 # LOL
+# 1 CryCoin = $100 = Rs.7601
 
 # value of the entity
 info = {
@@ -71,6 +71,7 @@ def mine(transaction_data):
             i += 1
 
 # print(mine('14/1e-15,?:argøn#0699(7120227)/2005cc6fa9afa76cf841925687839c96f2ba8ef28cc89dc2f3aad57cecfa53cd/nonce'))
+
 
 def max_row():
     return ledger_sheet.max_row - 1
