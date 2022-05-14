@@ -6,8 +6,6 @@ class Behaviour:
     default_hash = '0000000000000000000000000000000000000000000000000000000000000000' # default hash, for the first block (first block can't have a prev hash)
     time_out = 0 # people can use 'cry-mine' in this time interval (minutes)
     default_amount = 0 # 'cries' sent to the first lucky user (genesis block)
-    new_string_channel_id = 0 # id of a channel where all new "minable" strings could be sent
-    general_channel_category_id = 0 # id of "General" Category in the official server (people chill in this category)
-    test_category_id = 0 # id of a category in server named "Bot Testing"
-    help_chnl_id = 0 # id of a channel where users can seek help from the moderators
-    log_chnl_id = 0 # == new_string_channel_id (both the id are of the same channel, did it by mistake lol)
+    available_cats_channels = [] # channels and categories where the bot is allowed to be used
+    unavailable_channels = [] # channels where bot is not allowed
+    log_chnl_id = [] # channel where bot sends notifications for new "mine-able" strings and updated ledgers
