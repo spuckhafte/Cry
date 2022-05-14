@@ -3,11 +3,12 @@ import discord
 from datetime import datetime
 from bot_bio import Behaviour
 from functions import financial
+from store import Store
 
 FACTOR = Behaviour.cry_factor
 SIGN = Behaviour.hash_sign
 TIMEOUT = Behaviour.time_out
-STRING_CHANNEL_ID = Behaviour.new_string_channel_id
+STRING_CHANNEL_IDS = Behaviour.log_chnl_id
 
 
 async def join(message):
@@ -64,12 +65,13 @@ async def send_unsigned_transaction(message, Client):
         embed.add_field(name='Hash Signature', value=f'`{SIGN}`')
         await message.channel.send(embed=embed)
         await message.channel.send(f'```{string}```')
-        await Client.get_channel(STRING_CHANNEL_ID).send(f'New string:```{string}```')
+        for STRING_CHANNEL_ID in STRING_CHANNEL_IDS:
+            await Client.get_channel(STRING_CHANNEL_ID).send(f'New string:```{string}```')
         if financial.max_row() == 0:
             await message.channel.send('This is the `Genesis Block`, **first block of the chain**')
 
 
-async def check_mine(message, ledger_channel):
+async def check_mine(message, ledger_channels):
     user_mined_string = message.content.split('-')
     user_mined_string.remove('cry')
     user_mined_string.remove('mined')
@@ -132,23 +134,76 @@ async def check_mine(message, ledger_channel):
                     string = '/'.join(string)
                     if user_mined_string.startswith(string):
                         infile['current-unmined-string'].remove(string+'/nonce')
-                if '?' not in user_mined_string:
-                    if str(message.author) in user_mined_string.split('/')[1].split(':')[0]:
-                        for user in infile['users']:
-                            if user['username'] == str(message.author):
-                                user['pending-string'] = ''
-                                user['able'] = "1"
+
+                if '?' not in user_mined_string.split(':')[0]:
+                    for user in infile['users']:
+                        if user['username'] in user_mined_string.split(':')[0]:
+                            if user['able'] == '0':
+                                user['able'] = '1'
+                                user['pending-string'] = ""
                 json.dump(infile, outfile, indent=4)
 
             with open("functions/ledger.xlsx", 'rb') as file:
                 ledger = discord.File(file)
-                await ledger_channel.send("Public ledger - updated:", file=ledger)
+                for ledger_channel in ledger_channels:
+                    await ledger_channel.send("Public ledger - updated:", file=ledger)
         else:
             if not user_mined_string.startswith(current_hash):
                 await message.channel.send(f'Wrong string mined.\nMine: `{current_string}`\n*Order for mining is being followed here*')
             await message.channel.send('**Wrong Hash**')
     else:
         await message.channel.send('**Hash is already mined**')
+
+
+async def buy_item(msg, item, user, client, LOG_IDS):
+    all_items = Store.clothing
+    all_items.update(Store.other)
+    all_items.update(Store.food)
+    all_items.update(Store.electronic)
+    if item in all_items.keys():
+        item_price = all_items[item]
+        with open('members.json', 'r') as infile:
+            infile = json.load(infile)
+        for user_ in infile['users']:
+            if user_['username'] == str(user):
+                if user_['able'] == "1":
+                    if float(user_['cries']) >= float(item_price):
+                        user_['cries'] = str(float(user_['cries']) - float(item_price))
+                        if len(user_['items'].keys()) == 0:
+                            user_['items'] = {item: 1}
+                        else:
+                            if item in user_['items'].keys():
+                                user_['items'][item] += 1
+                            else:
+                                user_['items'][item] = 1
+
+                        var = datetime.now()
+                        event = f'{var.day}{var.month}{var.year}{var.hour}'
+                        export_data = {
+                            "cries": item_price,
+                            "from": str(user),
+                            "to": "?",
+                            "event": event
+                        }
+                        with open('members.json', 'w') as outfile:
+                            json.dump(infile, outfile, indent=4)
+                        await cries_transaction(export_data)
+                        await msg.channel.send(f'{user.mention} **Congo, You got: `{item}` for `{item_price} cries`**')
+                        break
+                    else:
+                        await msg.reply(f'{user} you do not have enough cries to buy {item}')
+                        break
+                else:
+                    pending_string = user_['pending-string']
+                    embed = discord.Embed(title='Pending Invalidated Transaction')
+                    embed.add_field(name='**Username:**', value=f'`{msg.author}`', inline=False)
+                    embed.add_field(name='**Mine:**', value=f'`{pending_string}`', inline=False)
+                    await msg.reply(embed=embed)
+                    for LOG_ID in LOG_IDS:
+                        await client.get_channel(LOG_ID).send(f'String: ```{pending_string}```')
+                    break
+    else:
+        await msg.reply(f'{item} is not available')
 
 
 async def award_user(data):
@@ -188,15 +243,15 @@ async def transaction(data):
 
     with open('members.json', 'r') as read_only:
         read_only = json.load(read_only)
-    for user in read_only['users']:
-        if user['username'] == to_:
-            user['cries'] = str(float(user['cries']) + float(amount))
-            break
-
-    if from_ != '?':
+    if to_ != '?':
         for user in read_only['users']:
-            if user['username'] == from_:
-                user['cries'] = str(float(user['cries']) - float(amount))
+            if user['username'] == to_:
+                user['cries'] = str(float(user['cries']) + float(amount))
+                break
+        if from_ != '?':
+            for user in read_only['users']:
+                if user['username'] == from_:
+                    user['cries'] = str(float(user['cries']) - float(amount))
 
     with open('members.json', 'w') as outfile:
         json.dump(read_only, outfile, indent=4)
@@ -265,3 +320,124 @@ async def cries_transaction(data):
     await transaction(data)
     return transaction_string
 
+
+async def private(msg):
+    chnl = msg.channel
+    with open('editing_user.json', 'r') as infile:
+        infile = json.load(infile)
+    if str(msg.author) in infile['update_users']:
+        if msg.content != 'cry-help-stop' or msg.content.startswith('cry-help-mod') is False:
+            try:
+                password = financial.EncDeEnc(deEncrypted=msg.content.split(',')[0]).hash_encrypt()
+                old_name = msg.content.split(',')[1]
+                user_found = False
+                with open('members.json', 'r') as members:
+                    members = json.load(members)
+                for user in members['users']:
+                    if user['password'] == password and user['username'] == old_name:
+                        user_found = True
+                        user['username'] = str(msg.author)
+                        break
+                with open('members.json', 'w') as outfile:
+                    json.dump(members, outfile, indent=4)
+
+                if user_found:
+                    with open('editing_user.json', 'r') as infile_2:
+                        infile_2 = json.load(infile_2)
+                    infile_2['update_users'].remove(str(msg.author))
+                    with open('editing_user.json', 'w') as outfile_2:
+                        json.dump(infile_2, outfile_2, indent=4)
+                    await msg.author.send('Username updated!')
+                else:
+                    with open('editing_user.json', 'r') as infile_2:
+                        infile_2 = json.load(infile_2)
+                    infile_2['update_users'].remove(str(msg.author))
+                    with open('editing_user.json', 'w') as outfile_2:
+                        json.dump(infile_2, outfile_2, indent=4)
+                    await chnl.send('**Wrong password/old_username, or you never existed in this ecosystem**')
+                    await chnl.send('Process Terminated!!!')
+
+            except:
+                with open('editing_user.json', 'r') as infile_2:
+                    infile_2 = json.load(infile_2)
+                infile_2['update_users'].remove(str(msg.author))
+                with open('editing_user.json', 'w') as outfile_2:
+                    json.dump(infile_2, outfile_2, indent=4)
+                await chnl.send('Process Terminated')
+
+        if msg.content == 'cry-help-stop':
+            with open('editing_user.json', 'r') as infile_2:
+                infile_2 = json.load(infile_2)
+            infile_2['update_users'].remove(str(msg.author))
+            with open('editing_user.json', 'w') as outfile_2:
+                json.dump(infile_2, outfile_2, indent=4)
+            await chnl.send('Process Terminated!')
+
+    if str(msg.author) in infile['password_candidates']:
+        if msg.content.startswith('cry-pass-'):
+            password_arr = msg.content.split('-')
+            password_arr.remove('cry')
+            password_arr.remove('pass')
+            password_string = ''.join(password_arr)
+            password = financial.EncDeEnc(deEncrypted=password_string).hash_encrypt()
+
+            proceed = True
+            with open('members.json', 'r') as infile:
+                infile = json.load(infile)
+            for user in infile['users']:
+                if user['password'] == password:
+                    proceed = False
+                    break
+
+            if len(password_string) < 4:
+                proceed = False
+
+            if proceed:
+                await msg.channel.send(f'Your password: {password_string}')
+                user_info = {
+                    'username': str(msg.author),
+                    'cries': '0',
+                    'password': password,
+                    'able': '1',
+                    'pending-string': '',
+                    'items': {}
+                }
+
+                with open('members.json', 'r') as members_list_read:
+                    users_info = json.load(members_list_read)
+
+                users_info['users'].append(user_info)
+
+                json_users_info = json.dumps(users_info, indent=4)
+                with open("members.json", "w") as member_list_write:
+                    member_list_write.write(json_users_info)
+
+                with open('editing_user.json', 'r') as infile:
+                    infile = json.load(infile)
+                infile['password_candidates'].remove(str(msg.author))
+                with open('editing_user.json', 'w') as outfile:
+                    json.dump(infile, outfile, indent=4)
+
+                with open("functions/ledger.xlsx", 'rb') as file:
+                    ledger = discord.File(file)
+                    await msg.channel.send("**Welcome, this is the Public Ledger:**", file=ledger)
+            else:
+                with open('editing_user.json', 'r') as infile:
+                    infile = json.load(infile)
+                infile['password_candidates'].remove(str(msg.author))
+                with open('editing_user.json', 'w') as outfile:
+                    json.dump(infile, outfile, indent=4)
+
+                if len(password_string) < 4:
+                    await chnl.send(
+                        'Password should have **4 or more characters** and should **not contain dashes(-)**\n**Process Terminated!**')
+                else:
+                    await chnl.send('This password is already being used by someone.\n**Process Terminated!**')
+
+        if msg.content == 'cry-help-stop':
+            with open('editing_user.json', 'r') as infile_2:
+                infile_2 = json.load(infile_2)
+            infile_2['password_candidates'].remove(str(msg.author))
+            with open('editing_user.json', 'w') as outfile_2:
+                json.dump(infile_2, outfile_2, indent=4)
+            await chnl.send('Process Terminated!')
